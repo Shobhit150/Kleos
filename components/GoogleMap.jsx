@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { GoogleMap, InfoWindow, Marker, DirectionsRenderer, useJsApiLoader } from '@react-google-maps/api';
 
 const containerStyle = {
@@ -16,53 +16,36 @@ const GoogleMapComponent = ({ source, destination }) => {
   const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
   const { isLoaded, loadError } = useJsApiLoader({
     googleMapsApiKey: apiKey,
-    libraries: ['places'] // Include the places library
+    libraries: ['places']
   });
 
   const [selectedMarker, setSelectedMarker] = useState(null);
-  const [userLocation, setUserLocation] = useState(null);
+  const [markers, setMarkers] = useState([{ position: { lat: 19.03, lng: 73.02 }, title: 'Marker 1' }, { position: { lat: 24.00, lng: 74.00 }, title: 'Marker 2' }]);
   const [directions, setDirections] = useState(null);
 
   useEffect(() => {
-    if (navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition(
-        (position) => {
-          const { latitude, longitude } = position.coords;
-          setUserLocation({ lat: latitude, lng: longitude });
-        },
-        (error) => {
-          console.error('Error fetching location:', error.message);
-        }
-      );
-    } else {
-      console.warn('Geolocation is not supported by this browser.');
+    if (source && destination) {
+      setMarkers([{ position: source, title: 'Source' }, { position: destination, title: 'Destination' }]);
+      fetchDirections(source, destination);
     }
-  }, []);
+  }, [source, destination]);
 
-  useEffect(() => {
-    if (source && destination && isLoaded) {
-      calculateRoute(source, destination);
-    }
-  }, [source, destination, isLoaded]);
-
-  const calculateRoute = (origin, destination) => {
-    if (window.google) {
-      const directionsService = new window.google.maps.DirectionsService();
-      directionsService.route(
-        {
-          origin,
-          destination,
-          travelMode: window.google.maps.TravelMode.DRIVING,
-        },
-        (result, status) => {
-          if (status === window.google.maps.DirectionsStatus.OK) {
-            setDirections(result);
-          } else {
-            console.error(`Error fetching directions ${result}`);
-          }
+  const fetchDirections = (source, destination) => {
+    const directionsService = new window.google.maps.DirectionsService();
+    directionsService.route(
+      {
+        origin: source,
+        destination: destination,
+        travelMode: window.google.maps.TravelMode.DRIVING
+      },
+      (result, status) => {
+        if (status === window.google.maps.DirectionsStatus.OK) {
+          setDirections(result);
+        } else {
+          console.error(`error fetching directions ${result}`);
         }
-      );
-    }
+      }
+    );
   };
 
   const handleMarkerClick = (marker) => {
@@ -114,17 +97,18 @@ const GoogleMapComponent = ({ source, destination }) => {
   return isLoaded ? (
     <GoogleMap
       mapContainerStyle={containerStyle}
-      center={userLocation || center}
+      center={center}
       zoom={16}
       onClick={handleMapClick}
       options={mapOptions}
     >
-      {userLocation && (
+      {markers.map((marker, index) => (
         <Marker
-          position={userLocation}
-          onClick={() => handleMarkerClick({ position: userLocation, title: 'Your Location' })}
+          key={index}
+          position={marker.position}
+          onClick={() => handleMarkerClick(marker)}
         />
-      )}
+      ))}
 
       {selectedMarker && (
         <InfoWindow

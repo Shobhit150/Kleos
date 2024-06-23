@@ -13,18 +13,29 @@ const center = {
 };
 
 const coordinates = [
-  { lat : 19.11417283, lng : 72.82911241 },
-  { lat : 19.28614865, lng : 72.85978641 },
-  { lat : 18.97101899, lng : 72.83151955 },
-  { lat : 19.15812865, lng : 72.8537006 },
-  { lat : 19.14874545, lng : 72.87676483 },
-  { lat : 19.05337011, lng : 72.91930008 },
-  { lat : 19.14208106, lng : 72.82915858 },
-  { lat : 19.04704382, lng : 72.86035354 },
-  { lat : 19.07037462, lng : 72.83125474 },
-  { lat : 19.06926239, lng : 72.88532186 },
-  { lat : 19.11417283, lng : 72.82911241 }
+  { lat: 19.11417283, lng: 72.82911241, name: '10TH ROAD' },
+  { lat: 19.28614865, lng: 72.85978641, name: '16TH ROAD' },
+  { lat: 18.97101899, lng: 72.83151955, name: '600 TENAMENT GATE' },
+  { lat: 19.15812865, lng: 72.8537006, name: 'A.H.ANSARI CHOWK' },
+  { lat: 19.14874545, lng: 72.87676483, name: 'A.H.SCHOOL' },
+  { lat: 19.05337011, lng: 72.91930008, name: 'A.T.I.' },
+  { lat: 19.14208106, lng: 72.82915858, name: 'AAI TULJABHAVANI CHK' },
+  { lat: 19.04704382, lng: 72.86035354, name: 'AAKASH GANGA SOCIETY (DHARAVI)' },
+  { lat: 19.07037462, lng: 72.83125474, name: 'AAREY HOSPITAL-MUNICIPAL SCHOOL' },
+  { lat: 19.06926239, lng: 72.88532186, name: 'AAREY ROAD SUBWAY' }
 ];
+
+const edges = [
+    { source: 0, destination: 6 },
+    { source: 0, destination: 1 },
+    { source: 1, destination: 7 },
+    { source: 2, destination: 5 },
+    { source: 3, destination: 7 },
+    { source: 4, destination: 9 },
+    { source: 5, destination: 7 },
+    { source: 6, destination: 9 },
+    { source: 8, destination: 9 }
+  ];
 
 const BusMap = () => {
   const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
@@ -67,9 +78,11 @@ const BusMap = () => {
   useEffect(() => {
     const getAllDirections = async () => {
       const allDirections = [];
-      for (let i = 0; i < coordinates.length - 1; i++) {
+      for (let edge of edges) {
+        const source = coordinates[edge.source];
+        const destination = coordinates[edge.destination];
         try {
-          const result = await fetchDirections(coordinates[i], coordinates[i + 1]);
+          const result = await fetchDirections(source, destination);
           allDirections.push(result);
         } catch (error) {
           console.error(error);
@@ -125,7 +138,8 @@ const BusMap = () => {
         <Marker
           key={index}
           position={{ lat: coord.lat, lng: coord.lng }}
-          onClick={() => handleMarkerClick({ position: { lat: coord.lat, lng: coord.lng }, title: `Marker ${index + 1}` })}
+          icon={index === 0 ? 'http://maps.google.com/mapfiles/ms/icons/green-dot.png' : null}
+          onClick={() => handleMarkerClick({ position: { lat: coord.lat, lng: coord.lng }, title: coord.name })}
         />
       ))}
 
@@ -136,7 +150,7 @@ const BusMap = () => {
           options={{
             suppressMarkers: true,
             polylineOptions: {
-              strokeColor: '#FF0000',
+              strokeColor: index === 8 ? '#0000FF' : '#FF0000', // Purple for the first path, blue for others
               strokeOpacity: 0.8,
               strokeWeight: 4,
             },
